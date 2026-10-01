@@ -18,6 +18,30 @@ Dann http://127.0.0.1:8741 aufrufen.
 
 In der Browser-Konsole laufen drei Selbsttests der Rechenfunktionen.
 
+## Ansicht
+
+Leerer Rechner bei 360px:
+
+![Leerer Rechner auf dem Handy](docs/screenshots/mobile-leer.png)
+
+Auswertung mit Marge, fairen Quoten, Value und Kein Value:
+
+![Ergebnis auf dem Handy](docs/screenshots/mobile-ergebnis.png)
+
+Deutsche Fehlermeldungen, wenn eine Quote nicht größer als 1,00 ist oder keine Dezimalzahl ist:
+
+![Fehlermeldungen](docs/screenshots/mobile-fehler.png)
+
+Dieselbe Auswertung auf breitem Fenster:
+
+![Ergebnis auf dem Desktop](docs/screenshots/desktop-ergebnis.png)
+
+## Ablauf
+
+Kurzes Video, etwa 40 Sekunden: Beispiel laden, Buchmacher-Marge 5,70 % mit Value und Kein Value, danach die deutsche Fehlermeldung bei ungültigen Quoten.
+
+[Demo ansehen](docs/demo/quotenrechner-beispiel-value-und-fehler.mp4)
+
 ## Rechnung
 
 - Implizite Wahrscheinlichkeit = 1 / Dezimalquote
