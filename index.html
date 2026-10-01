@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="WM-Quotenrechner für Dreiweg-Wetten: Buchmacher-Marge, faire Quoten nach der proportionalen Methode und Erwartungswert je 1 Euro.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; font-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>WM-Quotenrechner — Marge, faire Quoten, Value</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%239E1B32'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f6f1e7;
+      --card: #fffcf7;
+      --ink: #1c1915;
+      --muted: #4a433a;
+      --red: #9e1b32;
+      --green: #145c38;
+      --green-bg: #e5f4ec;
+      --red-bg: #f8e6e8;
+      --serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+      --sans: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { background: var(--paper); }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 1.0625rem;
+      line-height: 1.45;
+    }
+
+    .skip {
+      position: absolute;
+      left: 1rem;
+      top: -5rem;
+      z-index: 5;
+      background: var(--ink);
+      color: var(--paper);
+      padding: 0.6rem 1rem;
+      font-weight: 700;
+    }
+
+    .skip:focus { top: 1rem; }
+
+    :focus { outline: none; }
+
+    :focus-visible {
+      outline: 3px solid var(--red);
+      outline-offset: 2px;
+    }
+
+    .banner { background: var(--ink); color: var(--paper); }
+
+    .duty {
+      width: min(42rem, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 0.7rem 0;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .sheet {
+      width: min(42rem, calc(100% - 2rem));
+      margin: 0 auto 3rem;
+      padding-top: 1.25rem;
+      container-type: inline-size;
+      container-name: sheet;
+    }
+
+    .masthead {
+      border-top: 0.45rem solid var(--red);
+      padding-top: 0.85rem;
+    }
+
+    .masthead::after {
+      content: "";
+      display: block;
+      margin-top: 0.8rem;
+      border-top: 1px solid var(--ink);
+      border-bottom: 3px solid var(--ink);
+      height: 3px;
+    }
+
+    .brandline {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 0.35rem 1rem;
+      margin: 0;
+      font-size: 0.875rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .brand { color: var(--red); }
+
+    h1 {
+      margin: 0.55rem 0 0.45rem;
+      font-family: var(--serif);
+      font-size: clamp(2rem, 8vw, 3.05rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+    }
+
+    h2 {
+      margin: 0 0 0.35rem;
+      font-family: var(--serif);
+      font-size: 1.45rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .lede { margin: 0.9rem 0 0; }
+
+    fieldset {
+      border: 0;
+      margin: 1.35rem 0 0;
+      padding: 0;
+      min-width: 0;
+    }
+
+    .hint { margin: 0 0 0.85rem; color: var(--muted); }
+
+    .field { margin-bottom: 0.85rem; min-width: 0; }
+
+    label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-weight: 700;
+    }
+
+    .unit { font-weight: 400; color: var(--muted); }
+
+    input {
+      display: block;
+      width: 100%;
+      min-height: 3rem;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--ink);
+      border-radius: 0;
+      background: var(--card);
+      color: var(--ink);
+      font: inherit;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[aria-invalid="true"] {
+      border: 2px solid var(--red);
+      background: var(--red-bg);
+    }
+
+    .field-error {
+      margin: 0.35rem 0 0;
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .field-error:empty { display: none; }
+
+    #prob-status { margin: 0.15rem 0 0; font-variant-numeric: tabular-nums; }
+
+    #prob-status.is-good { color: var(--green); font-weight: 700; }
+
+    #prob-status.is-bad { color: var(--red); font-weight: 700; }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1.15rem;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+      border-radius: 0;
+    }
+
+    .primary,
+    .ghost {
+      min-height: 3rem;
+      padding: 0.65rem 1rem;
+      font-weight: 700;
+    }
+
+    .primary {
+      width: 100%;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .primary:hover { background: var(--red); border-color: var(--red); }
+
+    .secondary-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+
+    .ghost {
+      width: 100%;
+      border: 1px solid var(--ink);
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .ghost:hover { background: var(--ink); color: var(--paper); }
+
+    #form-errors {
+      margin: 0 0 1rem;
+      padding: 0.8rem 0.9rem 0.4rem;
+      border: 1px solid var(--red);
+      background: var(--red-bg);
+    }
+
+    #form-errors[hidden] { display: none; }
+
+    .error-title { margin: 0 0 0.35rem; font-weight: 700; }
+
+    #form-errors ul { margin: 0; padding: 0; list-style: none; }
+
+    .error-jump {
+      display: block;
+      width: 100%;
+      min-height: 2.75rem;
+      padding: 0.45rem 0;
+      border: 0;
+      background: transparent;
+      color: var(--red);
+      font-weight: 700;
+      text-align: left;
+      text-decoration: underline;
+    }
+
+    #ergebnis { margin-top: 1.6rem; }
+
+    #ergebnis-title:focus { outline-offset: 4px; }
+
+    .empty {
+      margin: 0;
+      padding: 0.95rem 0 0.2rem;
+      border-top: 1px dashed var(--muted);
+    }
+
+    .margin-block {
+      margin: 0 0 1rem;
+      padding: 0.15rem 0 1rem;
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .kicker {
+      margin: 0;
+      font-size: 0.875rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .figure {
+      display: block;
+      margin: 0.15rem 0 0.45rem;
+      font-family: var(--serif);
+      font-size: clamp(2.6rem, 12vw, 4rem);
+      font-style: normal;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 0.95;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .figure.is-negative { color: var(--red); }
+
+    .explain { margin: 0; }
+
+    .bar {
+      display: flex;
+      width: 100%;
+      height: 0.75rem;
+      border: 1px solid var(--ink);
+    }
+
+    .seg { display: block; flex-basis: 0; min-width: 2px; }
+
+    .seg-home,
+    .swatch-home { background: #1c1915; }
+
+    .seg-draw,
+    .swatch-draw { background: #9e1b32; }
+
+    .seg-away,
+    .swatch-away { background: #145c38; }
+
+    .share {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem 1rem;
+      margin: 0.65rem 0 0.2rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .share li {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .swatch {
+      width: 0.85rem;
+      height: 0.85rem;
+      border: 1px solid var(--ink);
+      flex: none;
+    }
+
+    .outcome {
+      margin-top: 0.75rem;
+      padding: 0.85rem 0.9rem 1rem;
+      border: 1px solid var(--ink);
+      background: var(--card);
+    }
+
+    .outcome-home { border-left: 6px solid #1c1915; }
+
+    .outcome-draw { border-left: 6px solid #9e1b32; }
+
+    .outcome-away { border-left: 6px solid #145c38; }
+
+    .outcome h3 {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin: 0 0 0.75rem;
+      font-family: var(--serif);
+      font-size: 1.25rem;
+    }
+
+    .code {
+      display: inline-grid;
+      place-items: center;
+      min-width: 1.9rem;
+      min-height: 1.9rem;
+      border: 1px solid var(--ink);
+      font-family: var(--sans);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 0.4rem 0.75rem;
+      margin: 0;
+    }
+
+    dt { color: var(--muted); }
+
+    dd {
+      margin: 0;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .verdict {
+      display: inline-block;
+      margin: 0.85rem 0 0;
+      padding: 0.35rem 0.55rem;
+      border: 1px solid currentColor;
+      font-weight: 700;
+    }
+
+    .verdict-yes { background: var(--green-bg); color: var(--green); }
+
+    .verdict-no { background: var(--red-bg); color: var(--red); }
+
+    .result-note { margin: 0.9rem 0 0; }
+
+    .round-note { margin: 0.45rem 0 0; color: var(--muted); }
+
+    details { margin-top: 1.5rem; border-top: 1px solid var(--ink); }
+
+    summary {
+      display: flex;
+      align-items: center;
+      min-height: 3rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .method p { margin: 0 0 0.75rem; }
+
+    .vh {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    p, dt, dd, label, button, h1, h2, h3, li {
+      overflow-wrap: break-word;
+    }
+
+    ::selection { background: var(--ink); color: var(--paper); }
+
+    @container sheet (min-width: 36rem) {
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+
+      .grid-3 .field { margin-bottom: 0; }
+
+      .secondary-actions { flex-direction: row; }
+
+      .secondary-actions .ghost { flex: 1; }
+    }
+
+    @media (forced-colors: active) {
+      :focus-visible { outline: 3px solid Highlight; }
+      .verdict, .outcome, .primary, .ghost, input { border: 1px solid ButtonText; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { scroll-behavior: auto !important; }
+    }
+
+    @media print {
+      body { background: #fff; color: #000; }
+      .banner, .primary { background: #fff; color: #000; }
+      .duty { color: #000; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#inhalt">Zum Inhalt springen</a>
+  <header class="banner">
+    <p class="duty" role="note">18+. Glücksspiel kann süchtig machen. Keine Wettberatung.</p>
+  </header>
+  <main id="inhalt" class="sheet" tabindex="-1" aria-labelledby="titel">
+    <header class="masthead">
+      <p class="brandline">
+        <span class="brand">tipmaster</span>
+        <span>WM-Märkte</span>
+      </p>
+      <h1 id="titel">WM-Quotenrechner</h1>
+    </header>
+    <p class="lede">Dreiweg-Wette (1X2): Buchmacher-Marge, faire Wahrscheinlichkeiten und faire Quoten. Mit eigenen Wahrscheinlichkeiten siehst du den Erwartungswert je 1&nbsp;€ Einsatz.</p>
+
+    <form id="rechner" novalidate>
+      <div id="form-errors" tabindex="-1" hidden></div>
+
+      <fieldset aria-labelledby="odds-title" aria-describedby="odds-hint">
+        <h2 id="odds-title">Dezimalquoten</h2>
+        <p class="hint" id="odds-hint">Jede Quote muss größer als 1,00 sein. Komma oder Punkt, zum Beispiel 2,10 oder 2.10.</p>
+        <div class="grid-3">
+          <div class="field">
+            <label for="odds-home">Heim (1)</label>
+            <input id="odds-home" name="odds-home" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-required="true">
+            <p class="field-error" id="odds-home-error"></p>
+          </div>
+          <div class="field">
+            <label for="odds-draw">Unentschieden (X)</label>
+            <input id="odds-draw" name="odds-draw" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-required="true">
+            <p class="field-error" id="odds-draw-error"></p>
+          </div>
+          <div class="field">
+            <label for="odds-away">Auswärts (2)</label>
+            <input id="odds-away" name="odds-away" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-required="true">
+            <p class="field-error" id="odds-away-error"></p>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset aria-labelledby="prob-title" aria-describedby="prob-hint prob-status">
+        <h2 id="prob-title">Eigene Wahrscheinlichkeiten</h2>
+        <p class="hint" id="prob-hint">Optional. Alle drei Felder leer lassen oder Prozente eintragen, die zusammen 100&nbsp;% ergeben.</p>
+        <div class="grid-3">
+          <div class="field">
+            <label for="prob-home">Heim <span class="unit">(%)</span></label>
+            <input id="prob-home" name="prob-home" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+            <p class="field-error" id="prob-home-error"></p>
+          </div>
+          <div class="field">
+            <label for="prob-draw">Unentschieden <span class="unit">(%)</span></label>
+            <input id="prob-draw" name="prob-draw" type="text" inputmode="decimal" enterkeyhint="next" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+            <p class="field-error" id="prob-draw-error"></p>
+          </div>
+          <div class="field">
+            <label for="prob-away">Auswärts <span class="unit">(%)</span></label>
+            <input id="prob-away" name="prob-away" type="text" inputmode="decimal" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+            <p class="field-error" id="prob-away-error"></p>
+          </div>
+        </div>
+        <p id="prob-status">Summe: —</p>
+      </fieldset>
+
+      <div class="actions">
+        <button class="primary" type="submit" aria-controls="ergebnis">Berechnen</button>
+        <div class="secondary-actions">
+          <button class="ghost" type="button" id="example">Beispiel laden</button>
+          <button class="ghost" type="button" id="clear">Felder leeren</button>
+        </div>
+        <p class="hint" id="example-hint">Beispiel: Quoten 2,10 / 3,30 / 3,60 und Wahrscheinlichkeiten 50&nbsp;% / 32&nbsp;% / 18&nbsp;%.</p>
+      </div>
+    </form>
+
+    <section id="ergebnis" aria-labelledby="ergebnis-title">
+      <h2 id="ergebnis-title" tabindex="-1">Ergebnis</h2>
+      <div id="ergebnis-body">
+        <p class="empty">Noch keine Auswertung. Trag drei gültige Quoten ein.</p>
+      </div>
+    </section>
+
+    <details>
+      <summary>So wird gerechnet</summary>
+      <div class="method">
+        <p>Die implizite Wahrscheinlichkeit einer Quote ist 1 geteilt durch die Dezimalquote. Die Buchmacher-Marge in Prozent ist die Summe der drei impliziten Wahrscheinlichkeiten, minus 100.</p>
+        <p>Faire Wahrscheinlichkeiten nach der proportionalen Methode: jede implizite Wahrscheinlichkeit wird durch diese Summe geteilt. Zusammen ergeben sie dann 100&nbsp;%. Die faire Quote ist 1 geteilt durch die faire Wahrscheinlichkeit.</p>
+        <p>Der Erwartungswert je 1&nbsp;€ Einsatz ist deine Wahrscheinlichkeit (als Anteil, also 50&nbsp;% = 0,50) mal die angebotene Quote, minus 1. Über 0,00&nbsp;€ steht Value, bei null oder darunter Kein Value. Dafür muss deine Wahrscheinlichkeit größer sein als 1 geteilt durch die angebotene Quote — nicht nur größer als die faire Wahrscheinlichkeit.</p>
+        <p>Die Rechnung bleibt in diesem Browser. Es wird nichts versendet.</p>
+      </div>
+    </details>
+  </main>
+  <div id="live" class="vh" aria-live="polite" aria-atomic="true"></div>
+  <noscript>
+    <p class="duty">Diese Seite rechnet im Browser und braucht JavaScript. Es werden keine Daten gesendet.</p>
+  </noscript>
+  <script>
+    /* Reine Rechenfunktionen. Kein DOM, keine Seiteneffekte. */
+
+    /**
+     * Dezimalzahl aus einer Eingabe mit Komma oder Punkt.
+     * @returns {{status: 'empty'|'partial'|'invalid'|'ok', value: number|null}}
+     */
+    function parseDecimal(raw) {
+      const trimmed = String(raw ?? '').trim().replace(/\s+/g, '');
+      if (trimmed === '') return { status: 'empty', value: null };
+      if (/[.,]$/.test(trimmed)) return { status: 'partial', value: null };
+
+      const commas = (trimmed.match(/,/g) || []).length;
+      const dots = (trimmed.match(/\./g) || []).length;
+      if (commas > 1 || dots > 1 || (commas > 0 && dots > 0)) {
+        return { status: 'invalid', value: null };
+      }
+
+      let normalized = trimmed.replace(',', '.');
+      if (normalized.startsWith('.')) normalized = `0${normalized}`;
+      if (!/^\d+(\.\d+)?$/.test(normalized)) return { status: 'invalid', value: null };
+
+      const value = Number(normalized);
+      if (!Number.isFinite(value)) return { status: 'invalid', value: null };
+      return { status: 'ok', value };
+    }
+
+    /**
+     * Markt ohne Marge nach der proportionalen Methode.
+     * @param {number[]} odds genau drei Dezimalquoten, jede > 1
+     */
+    function analyzeMarket(odds) {
+      if (!Array.isArray(odds) || odds.length !== 3 || odds.some((odd) => !(odd > 1))) {
+        throw new TypeError('Drei Quoten größer als 1 erwartet.');
+      }
+      const implied = odds.map((odd) => 1 / odd);
+      const impliedSum = implied.reduce((sum, probability) => sum + probability, 0);
+      const fairProbabilities = implied.map((probability) => probability / impliedSum);
+      return {
+        marginPercent: (impliedSum - 1) * 100,
+        implied,
+        impliedSum,
+        fairProbabilities,
+        fairOdds: fairProbabilities.map((probability) => 1 / probability),
+      };
+    }
+
+    /** Erwarteter Gewinn je 1 Geldeinheit. winProbability liegt zwischen 0 und 1. */
+    function expectedValuePerUnit(winProbability, decimalOdds) {
+      return winProbability * decimalOdds - 1;
+    }
+
+    /** Value nur, wenn der auf Cent gerundete Erwartungswert positiv ist. */
+    function classifyValue(ev) {
+      const cents = Math.round(ev * 100) / 100;
+      const normalized = cents === 0 ? 0 : cents;
+      return {
+        cents: normalized,
+        label: normalized > 0 ? 'Value' : 'Kein Value',
+      };
+    }
+
+    function nearly(actual, expected, epsilon = 1e-9) {
+      return Math.abs(actual - expected) <= epsilon;
+    }
+
+    function testMarginFree() {
+      const market = analyzeMarket([2, 3, 6]);
+      const fairSum = market.fairProbabilities.reduce((sum, probability) => sum + probability, 0);
+      return nearly(market.marginPercent, 0)
+        && nearly(market.fairProbabilities[0], 1 / 2)
+        && nearly(market.fairProbabilities[1], 1 / 3)
+        && nearly(market.fairProbabilities[2], 1 / 6)
+        && nearly(market.fairOdds[0], 2)
+        && nearly(market.fairOdds[1], 3)
+        && nearly(market.fairOdds[2], 6)
+        && nearly(fairSum, 1);
+    }
+
+    function testProportional() {
+      const market = analyzeMarket([2, 3, 4]);
+      return nearly(market.marginPercent, 100 / 12)
+        && nearly(market.fairProbabilities[0], 6 / 13)
+        && nearly(market.fairProbabilities[1], 4 / 13)
+        && nearly(market.fairProbabilities[2], 3 / 13)
+        && nearly(market.fairOdds[0], 13 / 6)
+        && nearly(market.fairOdds[1], 13 / 4)
+        && nearly(market.fairOdds[2], 13 / 3);
+    }
+
+    function testExpectedValue() {
+      const positive = expectedValuePerUnit(0.5, 3);
+      const negative = expectedValuePerUnit(0.25, 2);
+      const zero = expectedValuePerUnit(0.5, 2);
+      const positiveLabel = classifyValue(positive);
+      const negativeLabel = classifyValue(negative);
+      const zeroLabel = classifyValue(zero);
+      const tiny = classifyValue(0.004);
+      return nearly(positive, 0.5)
+        && nearly(negative, -0.5)
+        && nearly(zero, 0)
+        && positiveLabel.label === 'Value'
+        && positiveLabel.cents === 0.5
+        && negativeLabel.label === 'Kein Value'
+        && negativeLabel.cents === -0.5
+        && zeroLabel.label === 'Kein Value'
+        && zeroLabel.cents === 0
+        && tiny.label === 'Kein Value'
+        && tiny.cents === 0;
+    }
+
+    function runSelfTests() {
+      const cases = [
+        { name: 'Marge 0 — Quoten 2, 3 und 6 bleiben fair', run: testMarginFree },
+        { name: 'Proportional — 2, 3, 4 ergibt 6/13, 4/13, 3/13', run: testProportional },
+        { name: 'Erwartungswert je 1 — positiv ist Value, sonst Kein Value', run: testExpectedValue },
+      ];
+      let passed = 0;
+      cases.forEach((test, index) => {
+        let ok = false;
+        try {
+          ok = test.run() === true;
+        } catch (error) {
+          console.error(error);
+        }
+        const label = `Test ${index + 1}: ${test.name}`;
+        if (ok) {
+          passed += 1;
+          console.log(`PASS — ${label}`);
+        } else {
+          console.error(`FAIL — ${label}`);
+        }
+      });
+      console.log(`Selbsttests: ${passed}/3 bestanden`);
+      return passed === 3;
+    }
+
+    globalThis.Quotenrechnung = {
+      parseDecimal,
+      analyzeMarket,
+      expectedValuePerUnit,
+      classifyValue,
+      runSelfTests,
+    };
+
+    /* Oberfläche */
+
+    const OUTCOMES = [
+      { key: 'home', label: 'Heim', code: '1' },
+      { key: 'draw', label: 'Unentschieden', code: 'X' },
+      { key: 'away', label: 'Auswärts', code: '2' },
+    ];
+
+    const ui = {
+      submitAttempted: false,
+      dirty: new Set(),
+      lastLive: null,
+    };
+
+    function fieldLabel(outcome) {
+      return `${outcome.label} (${outcome.code})`;
+    }
+
+    function formatFixed(value, digits) {
+      const factor = 10 ** digits;
+      const rounded = Math.round(value * factor) / factor;
+      const negative = rounded < 0;
+      const body = new Intl.NumberFormat('de-DE', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      }).format(Math.abs(rounded));
+      return negative ? `−${body}` : body;
+    }
+
+    function formatPercent(value) {
+      return `${formatFixed(value, 2)}\u00A0%`;
+    }
+
+    function formatEuro(cents) {
+      const body = `${formatFixed(Math.abs(cents), 2)}\u00A0€`;
+      if (cents > 0) return `+${body}`;
+      if (cents < 0) return `−${body}`;
+      return body;
+    }
+
+    function formatEntry(raw) {
+      const trimmed = String(raw).trim().replace(/\s+/g, '').replace('.', ',');
+      const withZero = trimmed.startsWith(',') ? `0${trimmed}` : trimmed;
+      if (!withZero.includes(',')) return `${withZero},00`;
+      const fraction = withZero.split(',')[1];
+      if (fraction.length === 1) return `${withZero}0`;
+      return withZero;
+    }
+
+    function oddsProblem(outcome, parsed) {
+      const label = fieldLabel(outcome);
+      if (parsed.status === 'empty') return `${label}: Bitte eine Quote eingeben.`;
+      if (parsed.status === 'partial') return `${label}: Bitte die Quote vollständig eingeben.`;
+      if (parsed.status === 'invalid') return `${label}: Bitte eine Dezimalquote mit Komma oder Punkt eingeben.`;
+      if (!(parsed.value > 1)) return `${label}: Die Quote muss größer als 1,00 sein.`;
+      return null;
+    }
+
+    function probProblem(outcome, parsed) {
+      const label = fieldLabel(outcome);
+      if (parsed.status === 'empty') {
+        return `${label}: Bitte auch diese Wahrscheinlichkeit angeben oder alle drei Felder leeren.`;
+      }
+      if (parsed.status === 'partial') return `${label}: Bitte die Wahrscheinlichkeit vollständig eingeben.`;
+      if (parsed.status !== 'ok' || parsed.value < 0 || parsed.value > 100) {
+        return `${label}: Bitte eine Wahrscheinlichkeit zwischen 0 und 100 eingeben.`;
+      }
+      return null;
+    }
+
+    function classifyProbabilities(parsedList) {
+      if (parsedList.every((parsed) => parsed.status === 'empty')) {
+        return { mode: 'absent', sum: null, values: null };
+      }
+      if (parsedList.some((parsed) => parsed.status === 'partial')) {
+        const sum = parsedList.reduce((total, parsed) => (
+          total + (parsed.status === 'ok' ? parsed.value : 0)
+        ), 0);
+        return { mode: 'partial', sum, values: null };
+      }
+      const invalid = parsedList.some((parsed) => (
+        parsed.status !== 'ok' || parsed.value < 0 || parsed.value > 100
+      ));
+      if (invalid) return { mode: 'invalid', sum: null, values: null };
+      const values = parsedList.map((parsed) => parsed.value);
+      const sum = values.reduce((total, value) => total + value, 0);
+      if (Math.abs(sum - 100) >= 0.001) return { mode: 'bad-sum', sum, values };
+      return { mode: 'ready', sum, values };
+    }
+
+    function showSettledProblem(id, parsed) {
+      if (ui.submitAttempted) return true;
+      if (!ui.dirty.has(id)) return false;
+      return parsed.status !== 'empty' && parsed.status !== 'partial';
+    }
+
+    function readModel() {
+      const odds = OUTCOMES.map((outcome) => {
+        const id = `odds-${outcome.key}`;
+        const input = document.getElementById(id);
+        return { outcome, id, raw: input.value, parsed: parseDecimal(input.value) };
+      });
+      const probs = OUTCOMES.map((outcome) => {
+        const id = `prob-${outcome.key}`;
+        const input = document.getElementById(id);
+        return { outcome, id, raw: input.value, parsed: parseDecimal(input.value) };
+      });
+
+      const errors = [];
+      odds.forEach((field) => {
+        const message = oddsProblem(field.outcome, field.parsed);
+        if (message && showSettledProblem(field.id, field.parsed)) {
+          errors.push({ id: field.id, message, field: true });
+        }
+      });
+
+      const group = classifyProbabilities(probs.map((field) => field.parsed));
+      probs.forEach((field) => {
+        const message = probProblem(field.outcome, field.parsed);
+        if (!message) return;
+        const visible = field.parsed.status === 'empty'
+          ? ui.submitAttempted && group.mode !== 'absent'
+          : showSettledProblem(field.id, field.parsed);
+        if (visible) errors.push({ id: field.id, message, field: true });
+      });
+
+      if (group.mode === 'bad-sum') {
+        errors.push({
+          id: 'prob-home',
+          field: false,
+          message: `Die Wahrscheinlichkeiten müssen zusammen 100\u00A0% ergeben (aktuell ${formatPercent(group.sum)}).`,
+        });
+      }
+
+      const oddsReady = odds.every((field) => field.parsed.status === 'ok' && field.parsed.value > 1);
+      const market = oddsReady ? analyzeMarket(odds.map((field) => field.parsed.value)) : null;
+      const evaluations = market && group.mode === 'ready'
+        ? odds.map((field, index) => classifyValue(
+          expectedValuePerUnit(group.values[index] / 100, field.parsed.value),
+        ))
+        : null;
+
+      return { odds, probs, errors, group, market, evaluations };
+    }
+
+    function setFieldError(id, message) {
+      const input = document.getElementById(id);
+      const slot = document.getElementById(`${id}-error`);
+      slot.textContent = message || '';
+      if (message) {
+        input.setAttribute('aria-invalid', 'true');
+        input.setAttribute('aria-describedby', `${id}-error`);
+      } else {
+        input.removeAttribute('aria-invalid');
+        input.removeAttribute('aria-describedby');
+      }
+    }
+
+    function paintFieldErrors(model) {
+      const byId = new Map();
+      model.errors.forEach((error) => {
+        if (error.field && !byId.has(error.id)) byId.set(error.id, error.message);
+      });
+      [...model.odds, ...model.probs].forEach((field) => {
+        setFieldError(field.id, byId.get(field.id) || '');
+      });
+      if (model.group.mode !== 'bad-sum') return;
+      model.probs.forEach((field) => {
+        const input = document.getElementById(field.id);
+        if (input.getAttribute('aria-invalid') === 'true') return;
+        input.setAttribute('aria-invalid', 'true');
+        input.setAttribute('aria-describedby', 'prob-status');
+      });
+    }
+
+    function paintErrorSummary(errors) {
+      const box = document.getElementById('form-errors');
+      box.replaceChildren();
+      const summaryErrors = ui.submitAttempted ? errors : [];
+      if (summaryErrors.length === 0) {
+        box.hidden = true;
+        return;
+      }
+      box.hidden = false;
+      const title = document.createElement('p');
+      title.className = 'error-title';
+      title.textContent = summaryErrors.length === 1
+        ? 'Bitte eine Eingabe prüfen.'
+        : `Bitte ${summaryErrors.length} Eingaben prüfen.`;
+      const list = document.createElement('ul');
+      summaryErrors.forEach((error) => {
+        const item = document.createElement('li');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'error-jump';
+        button.textContent = error.message;
+        button.addEventListener('click', () => {
+          document.getElementById(error.id).focus();
+        });
+        item.appendChild(button);
+        list.appendChild(item);
+      });
+      box.append(title, list);
+    }
+
+    function paintProbabilityStatus(group) {
+      const status = document.getElementById('prob-status');
+      status.classList.remove('is-good', 'is-bad');
+      if (group.mode === 'absent') {
+        status.textContent = 'Summe: —';
+        return;
+      }
+      if (group.mode === 'partial') {
+        status.textContent = group.sum > 0
+          ? `Summe bisher: ${formatPercent(group.sum)}`
+          : 'Summe: —';
+        return;
+      }
+      if (group.mode === 'invalid') {
+        status.textContent = 'Summe: —';
+        return;
+      }
+      if (group.mode === 'bad-sum') {
+        status.classList.add('is-bad');
+        status.textContent = `Summe: ${formatPercent(group.sum)}. Die Wahrscheinlichkeiten müssen zusammen 100 % ergeben.`;
+        return;
+      }
+      status.classList.add('is-good');
+      status.textContent = 'Summe: 100 %';
+    }
+
+    function element(tag, className, text) {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      if (text != null) node.textContent = text;
+      return node;
+    }
+
+    function addRow(list, term, value) {
+      list.append(element('dt', '', term), element('dd', '', value));
+    }
+
+    function paintResults(model) {
+      const body = document.getElementById('ergebnis-body');
+      body.replaceChildren();
+      if (!model.market) {
+        const text = model.odds.some((field) => field.raw.trim() !== '')
+          ? 'Die Auswertung erscheint, sobald alle drei Quoten gültig sind.'
+          : 'Noch keine Auswertung. Trag drei gültige Quoten ein.';
+        body.appendChild(element('p', 'empty', text));
+        return;
+      }
+
+      const market = model.market;
+      const marginRounded = Math.round(market.marginPercent * 100) / 100;
+      const block = element('div', 'margin-block');
+      block.appendChild(element('p', 'kicker', 'Buchmacher-Marge'));
+      const figure = element('output', marginRounded < 0 ? 'figure is-negative' : 'figure');
+      figure.setAttribute('for', 'odds-home odds-draw odds-away');
+      figure.textContent = formatPercent(market.marginPercent);
+      block.appendChild(figure);
+
+      const impliedText = `Implizite Summe ${formatPercent(market.impliedSum * 100)}. `;
+      let explain = `${impliedText}Die Marge ist der Teil über 100 %.`;
+      if (marginRounded === 0) explain = `${impliedText}Auf diesen Quoten liegt keine Marge.`;
+      if (marginRounded < 0) explain = `${impliedText}Die Marge ist negativ, weil die Summe unter 100 % liegt.`;
+      block.appendChild(element('p', 'explain', explain));
+      body.appendChild(block);
+
+      const bar = element('div', 'bar');
+      bar.setAttribute('aria-hidden', 'true');
+      market.fairProbabilities.forEach((probability, index) => {
+        const segment = element('span', `seg seg-${OUTCOMES[index].key}`);
+        segment.style.flexGrow = String(probability);
+        bar.appendChild(segment);
+      });
+      body.appendChild(bar);
+
+      const share = element('ul', 'share');
+      market.fairProbabilities.forEach((probability, index) => {
+        const item = document.createElement('li');
+        const swatch = element('span', `swatch swatch-${OUTCOMES[index].key}`);
+        swatch.setAttribute('aria-hidden', 'true');
+        item.append(swatch, document.createTextNode(
+          `${OUTCOMES[index].label} ${formatPercent(probability * 100)}`,
+        ));
+        share.appendChild(item);
+      });
+      body.appendChild(share);
+
+      const displayed = market.fairProbabilities.map((probability) => (
+        Math.round(probability * 10000) / 100
+      ));
+      const drift = Math.round((100 - displayed.reduce((sum, value) => sum + value, 0)) * 100) / 100;
+      if (Math.abs(drift) >= 0.01) {
+        body.appendChild(element(
+          'p',
+          'round-note',
+          'Die fairen Prozente sind auf zwei Stellen gerundet; ungerundet ergeben sie 100 %.',
+        ));
+      }
+
+      OUTCOMES.forEach((outcome, index) => {
+        const card = element('article', `outcome outcome-${outcome.key}`);
+        const heading = element('h3');
+        const code = element('span', 'code', outcome.code);
+        code.setAttribute('aria-hidden', 'true');
+        heading.append(code, document.createTextNode(outcome.label));
+        card.appendChild(heading);
+
+        const list = document.createElement('dl');
+        addRow(list, 'Marktquote', formatEntry(model.odds[index].raw));
+        addRow(list, 'Faire Wahrscheinlichkeit', formatPercent(market.fairProbabilities[index] * 100));
+        addRow(list, 'Faire Quote', formatFixed(market.fairOdds[index], 2));
+        if (model.evaluations) {
+          addRow(list, 'Erwartungswert je 1 €', formatEuro(model.evaluations[index].cents));
+        }
+        card.appendChild(list);
+
+        if (model.evaluations) {
+          const verdict = model.evaluations[index];
+          const badge = element(
+            'p',
+            verdict.label === 'Value' ? 'verdict verdict-yes' : 'verdict verdict-no',
+          );
+          badge.append(element('span', 'vh', 'Einschätzung: '), document.createTextNode(verdict.label));
+          card.appendChild(badge);
+        }
+        body.appendChild(card);
+      });
+
+      let note = 'Ohne eigene Wahrscheinlichkeiten gibt es keinen Erwartungswert und keine Value-Einschätzung.';
+      if (model.group.mode === 'ready') {
+        note = 'Value heißt: positiver Erwartungswert je 1 € Einsatz zur angebotenen Quote.';
+      } else if (model.group.mode !== 'absent') {
+        note = 'Der Erwartungswert erscheint, sobald drei Wahrscheinlichkeiten zusammen 100 % ergeben.';
+      }
+      body.appendChild(element('p', 'result-note', note));
+    }
+
+    function liveText(model) {
+      if (!model.market) return 'Keine gültige Auswertung.';
+      let text = `Buchmacher-Marge ${formatPercent(model.market.marginPercent)}.`;
+      if (model.group.mode === 'bad-sum') {
+        text += ` Die Wahrscheinlichkeiten müssen zusammen 100 % ergeben (aktuell ${formatFixed(model.group.sum, 2)} %).`;
+      }
+      if (model.evaluations) {
+        const labels = OUTCOMES.map((outcome, index) => (
+          `${outcome.label}: ${model.evaluations[index].label}`
+        ));
+        text += ` ${labels.join(', ')}.`;
+      }
+      return text;
+    }
+
+    function updateLive(model) {
+      const text = liveText(model);
+      if (ui.lastLive === null) {
+        ui.lastLive = text;
+        return;
+      }
+      if (ui.lastLive === text) return;
+      ui.lastLive = text;
+      document.getElementById('live').textContent = text;
+    }
+
+    function render() {
+      try {
+        const model = readModel();
+        paintFieldErrors(model);
+        paintErrorSummary(model.errors);
+        paintProbabilityStatus(model.group);
+        paintResults(model);
+        updateLive(model);
+        return model;
+      } catch (error) {
+        console.error(error);
+        const body = document.getElementById('ergebnis-body');
+        body.replaceChildren(element(
+          'p',
+          'empty',
+          'Die Berechnung ist fehlgeschlagen. Bitte die Eingaben prüfen.',
+        ));
+        return { errors: [] };
+      }
+    }
+
+    function fillExample() {
+      const values = {
+        'odds-home': '2,10',
+        'odds-draw': '3,30',
+        'odds-away': '3,60',
+        'prob-home': '50',
+        'prob-draw': '32',
+        'prob-away': '18',
+      };
+      Object.entries(values).forEach(([id, value]) => {
+        document.getElementById(id).value = value;
+        ui.dirty.add(id);
+      });
+      ui.submitAttempted = false;
+      render();
+      document.getElementById('ergebnis-title').focus();
+    }
+
+    function clearFields() {
+      document.getElementById('rechner').reset();
+      ui.submitAttempted = false;
+      ui.dirty.clear();
+      render();
+      document.getElementById('odds-home').focus();
+    }
+
+    function onSubmit(event) {
+      event.preventDefault();
+      ui.submitAttempted = true;
+      const model = render();
+      if (model.errors.length) {
+        document.getElementById('form-errors').focus();
+        return;
+      }
+      document.getElementById('ergebnis-title').focus();
+    }
+
+    function init() {
+      const form = document.getElementById('rechner');
+      form.addEventListener('submit', onSubmit);
+      form.addEventListener('input', (event) => {
+        if (!(event.target instanceof HTMLInputElement)) return;
+        ui.dirty.add(event.target.id);
+        render();
+      });
+      document.getElementById('example').addEventListener('click', fillExample);
+      document.getElementById('clear').addEventListener('click', clearFields);
+      render();
+    }
+
+    runSelfTests();
+    init();
+  </script>
+</body>
+</html>
